@@ -1,0 +1,3 @@
+# setup 
+## requirements 
+- gin 
