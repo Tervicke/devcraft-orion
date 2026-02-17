@@ -1,8 +1,11 @@
 # How to run
 
 lets use bootstrap for this :') i dont have the brains for css
+
 i have used bootstrap in there
+
 you're going to get
+
 1. username
 2. auction_id
 3. bid
