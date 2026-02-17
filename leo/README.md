@@ -6,6 +6,7 @@ you're going to get
 1. username
 2. auction_id
 3. bid
+
 the code for it is here https://github.com/Tervicke/devcraft-orion/blob/main/leo/src/components/Bidder.tsx
 
 ```bash
