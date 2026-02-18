@@ -1,36 +1,49 @@
 import { useState, FormEvent } from "react";
 
 export function Bidder() {
-    const [Userid, setUserid] = useState("");
-    const [Auctionid, setAuctionid] = useState("");
-    const [currentPrice] = useState<number>(120);
+    const [Userid, setUserid] = useState("gambler");
+    const [Auctionid, setAuctionid] = useState("2");
+    const [currentPrice, setCurrentPrice] = useState<number>(0);
     const [Price, setBidAmount] = useState<number>(currentPrice);
 
-    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
 
-        if (!Userid.trim() || !Auctionid.trim()) {
-            alert("Username and Auction ID are required");
-            return;
-        }
+    if (!Auctionid.trim() || !Userid.trim()) {
+        console.log("Username and Auction ID are required");
+        return;
+    }
 
-        if (Price < currentPrice) {
-            alert("Bid must be at least the current Price.");
-            return;
-        }
+    if (Price <= currentPrice) {
+        console.log("Bid must be higher than the current price!");
+        return;
+    }
 
-        const payload = {
-            Auctionid: Auctionid.trim(),
-            Userid: Userid.trim(),
-            Price: Price,
-        };
-
-        await fetch("http://localhost:8080/bid", {
+    try {
+        const res = await fetch("http://localhost:8080/bid", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
+            body: JSON.stringify({
+                Auctionid: Auctionid.trim(),
+                Userid: Userid.trim(),
+                Price: Price,
+            }),
         });
-    };
+
+        const data = await res.json();
+
+        if (data.success === "1") {
+            // bid accepted → update current price
+            setCurrentPrice(Price);
+        } else if (data.error) {
+            console.log("Bid failed:", data.error);
+        } else {
+            console.log("Unexpected response from server:", data);
+        }
+    } catch (err) {
+        console.error("Failed to place bid:", err);
+    }
+}
 
     function increment(amount: number) {
         setBidAmount((prev) =>
