@@ -4,12 +4,12 @@ export function Bidder() {
   const [userid, setUserid] = useState("");
   const [auctionid, setAuctionid] = useState("");
   const [currentPrice] = useState<number>(120);
-  const [bidAmount, setBidAmount] = useState<number>(currentPrice);
+  const [price, setBidAmount] = useState<number>(currentPrice);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    if (bidAmount < currentPrice) {
+    if (price < currentPrice) {
       alert("Bid must be at least the current price.");
       return;
     }
@@ -20,7 +20,7 @@ export function Bidder() {
       body: JSON.stringify({
         userid,
         auctionid,
-        bidAmount,
+        price,
       }),
     });
   }
@@ -74,7 +74,7 @@ export function Bidder() {
                 className="form-control"
                 min={currentPrice}
                 step="0.01"
-                value={bidAmount}
+                value={price}
                 onChange={(e) =>
                   setBidAmount(Number(e.target.value) || 0)
                 }
