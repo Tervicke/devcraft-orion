@@ -1,27 +1,34 @@
-import React, { useState } from "react";
+import { useState, FormEvent } from "react";
 
 export function Bidder() {
-  const [username, setUsername] = useState("");
-  const [auctionId, setAuctionId] = useState("");
+  const [userid, setUserid] = useState("");
+  const [auctionid, setAuctionid] = useState("");
   const [currentPrice] = useState<number>(120);
   const [bidAmount, setBidAmount] = useState<number>(currentPrice);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    if (bidAmount < currentPrice) {
+      alert("Bid must be at least the current price.");
+      return;
+    }
 
     await fetch("http://localhost:8080", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        username,
-        auctionId,
+        userid,
+        auctionid,
         bidAmount,
       }),
     });
   }
 
   function increment(amount: number) {
-    setBidAmount(Number((currentPrice + amount).toFixed(2)));
+    setBidAmount((prev) =>
+      Number((prev + amount).toFixed(2))
+    );
   }
 
   return (
@@ -43,8 +50,8 @@ export function Bidder() {
               <input
                 type="text"
                 className="form-control"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={userid}
+                onChange={(e) => setUserid(e.target.value)}
                 required
               />
             </div>
@@ -54,8 +61,8 @@ export function Bidder() {
               <input
                 type="text"
                 className="form-control"
-                value={auctionId}
-                onChange={(e) => setAuctionId(e.target.value)}
+                value={auctionid}
+                onChange={(e) => setAuctionid(e.target.value)}
                 required
               />
             </div>
@@ -68,7 +75,9 @@ export function Bidder() {
                 min={currentPrice}
                 step="0.01"
                 value={bidAmount}
-                onChange={(e) => setBidAmount(Number(e.target.value))}
+                onChange={(e) =>
+                  setBidAmount(Number(e.target.value) || 0)
+                }
                 required
               />
             </div>
