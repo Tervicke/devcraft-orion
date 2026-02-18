@@ -1,35 +1,94 @@
-# How to run
+# auc
 
-lets use bootstrap for this :') i dont have the brains for css
+Live auction demo built with Bun, React, MariaDB, and simple WebSocket-based rooms.
 
-i have used bootstrap in there
+## 1. Install dependencies
 
-you're going to get
-
-1. username
-2. auction_id
-3. bid
-
-the code for it is here https://github.com/Tervicke/devcraft-orion/blob/main/leo/src/components/Bidder.tsx
+From the project root:
 
 ```bash
-# install deps
 bun install
-
-# run with hot reload
-bun --hot run start
+cd frontend
+bun install
 ```
+
+## 2. Set up the database (MariaDB)
+
+1. Log into MariaDB as a user with permission to create databases:
+
+   ```bash
+   mariadb -u root -p
+   ```
+
+2. Run the schema script from the project root:
+
+   ```bash
+   mariadb -u root -p < schema.sql
+   ```
+
+   This will:
+
+   - Create a database called `auc` (if it does not exist).
+   - Create `users` and `auctions` tables.
+
+3. Create or grant a DB user for the app (example uses `user` / `password`):
+
+   ```sql
+   CREATE USER IF NOT EXISTS 'user'@'localhost' IDENTIFIED BY 'password';
+   GRANT ALL PRIVILEGES ON auc.* TO 'user'@'localhost';
+   FLUSH PRIVILEGES;
+   ```
+
+## 3. Configure environment variables
+
+Create a `.env` file in the project root (already present if you followed earlier steps) with values matching your MariaDB setup:
 
 ```bash
-# to check the fetch request with netcat
-nc -lnvp 8080
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=user
+DB_PASSWORD=password
+DB_NAME=auc
+
+FRONTEND_ORIGIN=http://localhost:5173
+PORT=3000
 ```
 
-### send the request via the frontend and paste this
+`FRONTEND_ORIGIN` should match the origin where your frontend dev server is running (by default Vite uses `http://localhost:5173`).
+
+### Frontend API base URL
+
+The frontend talks to the backend via a shared API base URL:
+
+- Default value is configured in `frontend/src/config/api.ts`.
+- You can override it with `VITE_API_BASE` in a `frontend/.env` file if you prefer.
+
+Example `frontend/.env`:
+
 ```bash
-HTTP/1.1 200 OK
-Access-Control-Allow-Origin: http://localhost:3000
-Access-Control-Allow-Methods: POST, OPTIONS
-Access-Control-Allow-Headers: Content-Type
-Content-Length: 0
+VITE_API_BASE=http://localhost:3000
 ```
+
+## 4. Run the backend
+
+From the project root:
+
+```bash
+bun run index.ts
+```
+
+The backend will listen on `http://localhost:3000`.
+
+## 5. Run the frontend
+
+From the `frontend` directory:
+
+```bash
+cd frontend
+bun dev
+```
+
+Open `http://localhost:5173` in your browser to access the app.
+
+This project was created using `bun init` in bun v1.3.9. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+
