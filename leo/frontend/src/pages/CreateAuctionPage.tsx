@@ -36,7 +36,7 @@ export function CreateAuctionPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // send cookies for auth
+        //credentials: "include", // send cookies for auth
         body: JSON.stringify({
           item,
           startingPrice: Number(startingPrice),
@@ -47,7 +47,9 @@ export function CreateAuctionPage() {
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError((data as { error?: string }).error ?? "Failed to create auction");
+        setError(
+          (data as { error?: string }).error ?? "Failed to create auction"
+        );
         return;
       }
 
@@ -82,7 +84,10 @@ export function CreateAuctionPage() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-800" htmlFor="startingPrice">
+          <label
+            className="text-sm font-medium text-slate-800"
+            htmlFor="startingPrice"
+          >
             Starting Price
           </label>
           <Input
@@ -110,7 +115,10 @@ export function CreateAuctionPage() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-800" htmlFor="endTime">
+          <label
+            className="text-sm font-medium text-slate-800"
+            htmlFor="endTime"
+          >
             End Time
           </label>
           <Input
@@ -131,7 +139,6 @@ export function CreateAuctionPage() {
           {loading ? "Creating..." : "Create Auction"}
         </Button>
       </form>
-
     </div>
   );
 }

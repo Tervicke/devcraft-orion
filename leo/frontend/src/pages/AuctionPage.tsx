@@ -18,9 +18,9 @@ export function AuctionPage() {
   const [auction, setAuction] = useState<Auction | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<string>("");
-  const [wsStatus, setWsStatus] = useState<"disconnected" | "connecting" | "connected">(
-    "disconnected",
-  );
+  const [wsStatus, setWsStatus] = useState<
+    "disconnected" | "connecting" | "connected"
+  >("disconnected");
   const [userId, setUserId] = useState("gambler");
   const [currentPrice, setCurrentPrice] = useState<number>(0);
   const [bidPrice, setBidPrice] = useState<number>(0);
@@ -36,12 +36,14 @@ export function AuctionPage() {
     async function fetchAuction() {
       try {
         const res = await fetch(`${API_BASE}/api/auction/${id}`, {
-          credentials: "include",
+          //credentials: "include",
         });
         const data = await res.json();
         if (!res.ok) {
           if (!cancelled) {
-            setError((data as { error?: string }).error ?? "Failed to load auction");
+            setError(
+              (data as { error?: string }).error ?? "Failed to load auction"
+            );
           }
           return;
         }
@@ -172,7 +174,8 @@ export function AuctionPage() {
       const data = await res.json().catch(() => ({}));
       if (data.success !== "1") {
         setBidError(
-          (data as { error?: string }).error ?? "Bid was not accepted by the server",
+          (data as { error?: string }).error ??
+            "Bid was not accepted by the server"
         );
       }
       // currentPrice will be updated via WebSocket when server broadcasts
@@ -244,8 +247,8 @@ export function AuctionPage() {
               {wsStatus === "connecting"
                 ? "Connecting..."
                 : wsStatus === "connected"
-                  ? "Connected"
-                  : "Disconnected"}
+                ? "Connected"
+                : "Disconnected"}
             </span>
           </span>
         </div>
@@ -273,7 +276,12 @@ export function AuctionPage() {
             >
               Auction ID
             </label>
-            <Input id="auctionIdDisplay" type="text" value={id ?? ""} disabled />
+            <Input
+              id="auctionIdDisplay"
+              type="text"
+              value={id ?? ""}
+              disabled
+            />
           </div>
 
           <div className="space-y-1">
@@ -326,4 +334,3 @@ export function AuctionPage() {
     </div>
   );
 }
-
