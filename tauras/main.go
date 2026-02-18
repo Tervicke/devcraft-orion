@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
+	"github.com/gin-contrib/cors"
 )
 
 func setupDb() (*sql.DB, error) {
@@ -90,6 +91,7 @@ func main(){
 	log.Println("Successfully connected to database");
 
 	r := gin.Default();
+	r.Use(cors.Default()) // using cors because preflight request needs it
 	
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, "helloworld");
