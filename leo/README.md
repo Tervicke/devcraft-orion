@@ -1,94 +1,73 @@
-# auc
+# React + TypeScript + Vite
 
-Live auction demo built with Bun, React, MariaDB, and simple WebSocket-based rooms.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## 1. Install dependencies
+Currently, two official plugins are available:
 
-From the project root:
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-```bash
-bun install
-cd frontend
-bun install
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
 
-## 2. Set up the database (MariaDB)
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-1. Log into MariaDB as a user with permission to create databases:
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-   ```bash
-   mariadb -u root -p
-   ```
-
-2. Run the schema script from the project root:
-
-   ```bash
-   mariadb -u root -p < schema.sql
-   ```
-
-   This will:
-
-   - Create a database called `auc` (if it does not exist).
-   - Create `users` and `auctions` tables.
-
-3. Create or grant a DB user for the app (example uses `user` / `password`):
-
-   ```sql
-   CREATE USER IF NOT EXISTS 'user'@'localhost' IDENTIFIED BY 'password';
-   GRANT ALL PRIVILEGES ON auc.* TO 'user'@'localhost';
-   FLUSH PRIVILEGES;
-   ```
-
-## 3. Configure environment variables
-
-Create a `.env` file in the project root (already present if you followed earlier steps) with values matching your MariaDB setup:
-
-```bash
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=user
-DB_PASSWORD=password
-DB_NAME=auc
-
-FRONTEND_ORIGIN=http://localhost:5173
-PORT=3000
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
-
-`FRONTEND_ORIGIN` should match the origin where your frontend dev server is running (by default Vite uses `http://localhost:5173`).
-
-### Frontend API base URL
-
-The frontend talks to the backend via a shared API base URL:
-
-- Default value is configured in `frontend/src/config/api.ts`.
-- You can override it with `VITE_API_BASE` in a `frontend/.env` file if you prefer.
-
-Example `frontend/.env`:
-
-```bash
-VITE_API_BASE=http://localhost:3000
-```
-
-## 4. Run the backend
-
-From the project root:
-
-```bash
-bun run index.ts
-```
-
-The backend will listen on `http://localhost:3000`.
-
-## 5. Run the frontend
-
-From the `frontend` directory:
-
-```bash
-cd frontend
-bun dev
-```
-
-Open `http://localhost:5173` in your browser to access the app.
-
-This project was created using `bun init` in bun v1.3.9. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
-
