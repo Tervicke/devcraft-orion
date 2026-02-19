@@ -36,7 +36,7 @@ export function AuctionPage() {
     async function fetchAuction() {
       try {
         const res = await fetch(`${API_BASE}/api/auction/${id}`, {
-          //credentials: "include",
+          credentials: "include",
         });
         const data = await res.json();
         if (!res.ok) {
@@ -113,9 +113,10 @@ export function AuctionPage() {
       socket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          if (data.highestPrice !== undefined) {
-            setCurrentPrice(data.highestPrice);
-            setBidPrice(data.highestPrice);
+          console.log(data);
+          if (data.Price !== undefined) {
+            setCurrentPrice(data.Price);
+            setBidPrice(data.Price);
           }
         } catch (err) {
           console.error("WS parse error:", err);
@@ -162,7 +163,7 @@ export function AuctionPage() {
 
     try {
       setBidLoading(true);
-      const res = await fetch("http://localhost:8080/bid", {
+      const res = await fetch("http://localhost:3000/bid", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

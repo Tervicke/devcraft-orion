@@ -23,7 +23,7 @@ export function RegisterPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        //        credentials: "include",
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json().catch(() => ({}));

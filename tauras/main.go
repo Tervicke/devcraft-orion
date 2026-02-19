@@ -310,7 +310,10 @@ func handleCreateAuction(c *gin.Context) {
 		return
 	}
 
-	endTime, err := time.Parse(time.RFC3339, body.EndTime)
+	fmt.Println("Received create auction request: \n", body);
+
+	layout := "2006-01-02T15:04"
+	endTime, err := time.Parse(layout, body.EndTime)
 	if err != nil {
 		c.JSON(400, gin.H{"error": "Invalid end time"})
 		return
@@ -323,11 +326,20 @@ func handleCreateAuction(c *gin.Context) {
 		image = nil
 	}
 
-	res, err := authDB.Exec(
+	//use a transaction to ensure both auction and initial bid are created together
+	tx, err := authDB.Begin()
+	if err != nil {
+		log.Printf("error starting transaction: %v", err)
+		c.JSON(500, gin.H{"error": "Internal server error"})
+		return
+	}
+
+	res, err := tx.Exec(
 		"INSERT INTO auctions (user_id, item, starting_price, image_url, end_time) VALUES (?, ?, ?, ?, ?)",
 		s.UserID, body.Item, *body.StartingPrice, image, endTime,
 	)
 	if err != nil {
+		tx.Rollback()
 		log.Printf("error inserting auction: %v", err)
 		c.JSON(500, gin.H{"error": "Internal server error"})
 		return
@@ -335,7 +347,27 @@ func handleCreateAuction(c *gin.Context) {
 
 	auctionID, err := res.LastInsertId()
 	if err != nil {
+		tx.Rollback()
 		log.Printf("error getting auction insert id: %v", err)
+		c.JSON(500, gin.H{"error": "Internal server error"})
+		return
+	}
+
+	_, err = tx.Exec(
+		"INSERT INTO bids (auction_id, user_id, price) VALUES (?, ?, ?)",
+		auctionID,
+		s.UserID,
+		*body.StartingPrice,
+	)
+	if err != nil {
+		tx.Rollback()
+		log.Printf("error inserting initial bid: %v", err)
+		c.JSON(500, gin.H{"error": "Internal server error"})
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Printf("error committing transaction: %v", err)
 		c.JSON(500, gin.H{"error": "Internal server error"})
 		return
 	}
@@ -465,15 +497,23 @@ func main(){
 	defer p.Close();
 
 	r := gin.Default();
-	r.Use(cors.Default()) // using cors because preflight request needs it
-	r.Use(corsMiddleware())
-	r.Use(corsAllowAll());
+	//only allow localhost:5173 cors and include allow creditinals
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, "helloworld");
 	});
 	
 	r.POST("/bid", func(c *gin.Context) {
+		fmt.Println("Received bid request");
 		bidHandler(c,db,p);
 	});
 

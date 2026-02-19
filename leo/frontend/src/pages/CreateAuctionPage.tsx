@@ -36,7 +36,7 @@ export function CreateAuctionPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        //credentials: "include", // send cookies for auth
+        credentials: "include", // send cookies for auth
         body: JSON.stringify({
           item,
           startingPrice: Number(startingPrice),
