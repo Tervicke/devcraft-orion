@@ -255,6 +255,7 @@ func handleCreateAuction(c *gin.Context) {
 }
 
 func handleGetAuction(c *gin.Context) {
+
 	id := c.Param("id")
 
 	var auction struct {

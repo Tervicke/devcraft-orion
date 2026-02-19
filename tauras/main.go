@@ -127,6 +127,32 @@ func bidHandler(c *gin.Context, db *sql.DB, p *kafka.Producer) {
 		return
 	}
 
+	// Enforce auction end time (IST / Asia-Kolkata).
+	var endTime time.Time
+	if err := db.QueryRow("SELECT end_time FROM auctions WHERE id = ?", auctionID).Scan(&endTime); err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(404, gin.H{"error": "Auction not found"})
+			return
+		}
+		log.Printf("error selecting auction end_time: %v", err)
+		c.JSON(500, gin.H{"error": "Failed to validate auction end time"})
+		return
+	}
+
+	loc, locErr := time.LoadLocation("Asia/Kolkata")
+	if locErr != nil {
+		log.Printf("error loading IST location: %v", locErr)
+		c.JSON(500, gin.H{"error": "Internal server error"})
+		return
+	}
+
+	nowIST := time.Now().In(loc)
+	endIST := endTime.In(loc)
+	if !nowIST.Before(endIST) {
+		c.JSON(400, gin.H{"error": "Auction has already ended"})
+		return
+	}
+
 	var maxPrice sql.NullFloat64
 	err = db.QueryRow(
 		"SELECT COALESCE(MAX(price), 0) FROM bids WHERE auction_id = ?",
@@ -379,8 +405,16 @@ func handleCreateAuction(c *gin.Context) {
 
 	fmt.Println("Received create auction request: \n", body);
 
+	// Treat all end times as IST (Asia/Kolkata) local time.
+	loc, err := time.LoadLocation("Asia/Kolkata")
+	if err != nil {
+		log.Printf("error loading IST location: %v", err)
+		c.JSON(500, gin.H{"error": "Internal server error"})
+		return
+	}
+
 	layout := "2006-01-02T15:04"
-	endTime, err := time.Parse(layout, body.EndTime)
+	endTime, err := time.ParseInLocation(layout, body.EndTime, loc)
 	if err != nil {
 		c.JSON(400, gin.H{"error": "Invalid end time"})
 		return

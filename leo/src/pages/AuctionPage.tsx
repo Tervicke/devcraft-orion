@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useAuth } from "../auth/AuthContext";
-import { API_BASE } from "../config/api";
+import { API_BASE, WS_BASE } from "../config/api";
 
 type Auction = {
   id: number;
@@ -14,7 +14,7 @@ type Auction = {
   endTime: string;
 };
 
-type BidEntry = { price: number; email: string };
+type BidEntry = { price: number; label: string };
 
 export function AuctionPage() {
   const { id } = useParams<{ id: string }>();
@@ -75,27 +75,6 @@ export function AuctionPage() {
     };
   }, [id]);
 
-  // Fetch bid history
-  async function fetchBids() {
-    if (!id) return;
-    try {
-      const res = await fetch(`${API_BASE}/api/auction/${id}/bids`, {
-        credentials: "include",
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && Array.isArray((data as { bids?: BidEntry[] }).bids)) {
-        setBids((data as { bids: BidEntry[] }).bids);
-      }
-    } catch {
-      // ignore
-    }
-  }
-
-  useEffect(() => {
-    if (!auction) return;
-    fetchBids();
-  }, [id, auction]);
-
   // Countdown timer
   useEffect(() => {
     if (!auction) return;
@@ -120,16 +99,12 @@ export function AuctionPage() {
     return () => clearInterval(interval);
   }, [auction]);
 
-  // WebSocket connection for live bid updates (same server as API)
+  // WebSocket connection for live bid updates (Pisces)
   useEffect(() => {
     if (!id) return;
     setWsStatus("connecting");
 
-    const wsBase =
-      API_BASE.startsWith("https")
-        ? "wss" + API_BASE.slice(5)
-        : "ws" + API_BASE.slice(4);
-    const wsUrl = wsBase + "/auction/" + id;
+    const wsUrl = `${WS_BASE}/ws`;
 
     let socket: WebSocket | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -144,21 +119,30 @@ export function AuctionPage() {
       socket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data) as {
+            Auctionid?: string;
             Price?: number;
             email?: string;
           };
-          if (data.Price !== undefined) {
-            setCurrentPrice(data.Price);
-            setBidPrice(data.Price);
+
+          // Only handle bids for this auction
+          if (!data.Auctionid || data.Auctionid !== id) {
+            return;
           }
-          if (data.email !== undefined && data.Price !== undefined) {
-            const next = { price: data.Price!, email: data.email! };
+
+          if (data.Price !== undefined) {
+            const price = data.Price!;
+            setCurrentPrice(price);
+            setBidPrice(price);
+
+            const label = `anonymous bid, ${price.toFixed(2)}`;
+            const next: BidEntry = { price, label };
+
             setBids((prev) => {
-              // Dedupe: same bid can arrive twice (e.g. two WS connections in dev)
+              // Dedupe latest bid
               if (
                 prev.length > 0 &&
-                prev[0].email === next.email &&
-                prev[0].price === next.price
+                prev[0].price === next.price &&
+                prev[0].label === next.label
               ) {
                 return prev;
               }
@@ -399,8 +383,8 @@ export function AuctionPage() {
                   key={i}
                   className="flex justify-between gap-2 text-slate-700"
                 >
-                  <span className="truncate" title={bid.email}>
-                    {bid.email}
+                  <span className="truncate" title={bid.label}>
+                    {bid.label}
                   </span>
                   <span className="shrink-0 font-medium">
                     ${bid.price.toFixed(2)}
