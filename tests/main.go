@@ -263,12 +263,29 @@ func handleGetAuction(c *gin.Context) {
 		Price     float64
 		ImageURL  sql.NullString
 		EndTime   time.Time
+		CurrentPrice float64
 	}
 
-	err := db.QueryRow(
-		"SELECT id,item,starting_price,image_url,end_time FROM auctions WHERE id=?",
-		id,
-	).Scan(&auction.ID, &auction.Item, &auction.Price, &auction.ImageURL, &auction.EndTime)
+	err := db.QueryRow(`
+	SELECT 
+		a.id,
+		a.item,
+		a.starting_price,
+		a.image_url,
+		a.end_time,
+		COALESCE(MAX(b.price), a.starting_price) AS current_price
+	FROM auctions a
+	LEFT JOIN bids b ON b.auction_id = a.id
+	WHERE a.id = ?
+	GROUP BY a.id
+	`, id).Scan(
+		&auction.ID,
+		&auction.Item,
+		&auction.Price,
+		&auction.ImageURL,
+		&auction.EndTime,
+		&auction.CurrentPrice,
+	)
 
 	if err != nil {
 		c.JSON(404, gin.H{"error": "Not found"})
@@ -279,6 +296,7 @@ func handleGetAuction(c *gin.Context) {
 		"id":            auction.ID,
 		"item":          auction.Item,
 		"startingPrice": auction.Price,
+		"currentPrice":  auction.CurrentPrice,
 		"imageUrl":      auction.ImageURL.String,
 		"endTime":       auction.EndTime.Format(time.RFC3339),
 	})

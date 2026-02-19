@@ -8,6 +8,7 @@ import { API_BASE } from "../config/api";
 type Auction = {
   id: number;
   item: string;
+  currentPrice: number;
   startingPrice: number;
   imageUrl: string | null;
   endTime: string;
@@ -49,9 +50,10 @@ export function AuctionPage() {
         }
         if (!cancelled) {
           const auctionData = data as Auction;
+          console.log(auctionData);
           setAuction(auctionData);
-          setCurrentPrice(auctionData.startingPrice);
-          setBidPrice(auctionData.startingPrice);
+          setCurrentPrice(auctionData.currentPrice);
+          setBidPrice(auctionData.currentPrice);
         }
       } catch (err) {
         console.error(err);
