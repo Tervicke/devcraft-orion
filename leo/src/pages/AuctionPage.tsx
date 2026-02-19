@@ -14,6 +14,8 @@ type Auction = {
   endTime: string;
 };
 
+type BidEntry = { price: number; email: string };
+
 export function AuctionPage() {
   const { id } = useParams<{ id: string }>();
   const [auction, setAuction] = useState<Auction | null>(null);
@@ -27,6 +29,7 @@ export function AuctionPage() {
   const [bidPrice, setBidPrice] = useState<number>(0);
   const [bidError, setBidError] = useState<string | null>(null);
   const [bidLoading, setBidLoading] = useState(false);
+  const [bids, setBids] = useState<BidEntry[]>([]);
   const { isAuthenticated } = useAuth();
 
   // Fetch auction details
@@ -72,6 +75,27 @@ export function AuctionPage() {
     };
   }, [id]);
 
+  // Fetch bid history
+  async function fetchBids() {
+    if (!id) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/auction/${id}/bids`, {
+        credentials: "include",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && Array.isArray((data as { bids?: BidEntry[] }).bids)) {
+        setBids((data as { bids: BidEntry[] }).bids);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  useEffect(() => {
+    if (!auction) return;
+    fetchBids();
+  }, [id, auction]);
+
   // Countdown timer
   useEffect(() => {
     if (!auction) return;
@@ -96,31 +120,50 @@ export function AuctionPage() {
     return () => clearInterval(interval);
   }, [auction]);
 
-  // WebSocket connection for live updates (placeholder echo)
+  // WebSocket connection for live bid updates (same server as API)
   useEffect(() => {
     if (!id) return;
     setWsStatus("connecting");
+
+    const wsBase =
+      API_BASE.startsWith("https")
+        ? "wss" + API_BASE.slice(5)
+        : "ws" + API_BASE.slice(4);
+    const wsUrl = wsBase + "/auction/" + id;
 
     let socket: WebSocket | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
     const connectWS = () => {
-      socket = new WebSocket("ws://localhost:8081/ws");
+      socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {
         setWsStatus("connected");
-        if (id) {
-          socket?.send(id); // subscribe to this auction's price stream
-        }
       };
 
       socket.onmessage = (event) => {
         try {
-          const data = JSON.parse(event.data);
-          console.log(data);
+          const data = JSON.parse(event.data) as {
+            Price?: number;
+            email?: string;
+          };
           if (data.Price !== undefined) {
             setCurrentPrice(data.Price);
             setBidPrice(data.Price);
+          }
+          if (data.email !== undefined && data.Price !== undefined) {
+            const next = { price: data.Price!, email: data.email! };
+            setBids((prev) => {
+              // Dedupe: same bid can arrive twice (e.g. two WS connections in dev)
+              if (
+                prev.length > 0 &&
+                prev[0].email === next.email &&
+                prev[0].price === next.price
+              ) {
+                return prev;
+              }
+              return [next, ...prev].slice(0, 20);
+            });
           }
         } catch (err) {
           console.error("WS parse error:", err);
@@ -167,9 +210,10 @@ export function AuctionPage() {
 
     try {
       setBidLoading(true);
-      const res = await fetch("http://localhost:3000/bid", {
+      const res = await fetch(`${API_BASE}/bid`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           Auctionid: id,
           Userid: userId,
@@ -182,8 +226,11 @@ export function AuctionPage() {
           (data as { error?: string }).error ??
             "Bid was not accepted by the server"
         );
+      } else {
+        setCurrentPrice(bidPrice);
+        setBidPrice(bidPrice);
+        // New bid entry will appear via WebSocket broadcast
       }
-      // currentPrice will be updated via WebSocket when server broadcasts
     } catch (err) {
       console.error("Failed to place bid:", err);
       setBidError("Failed to place bid");
@@ -213,7 +260,7 @@ export function AuctionPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
       <div className="rounded-lg border bg-white p-6 shadow-sm">
         <h1 className="mb-2 text-2xl font-semibold">{auction.item}</h1>
         <p className="mb-1 text-sm text-slate-600">
@@ -244,7 +291,8 @@ export function AuctionPage() {
         )}
       </div>
 
-      <div className="rounded-lg border bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-4 md:flex-row">
+        <div className="flex-1 rounded-lg border bg-white p-4 shadow-sm">
         <div className="mb-2 flex items-center justify-between text-sm text-slate-600">
           <span>Live price stream (WebSocket)</span>
           <span>
@@ -336,6 +384,32 @@ export function AuctionPage() {
             {bidLoading ? "Submitting bid..." : "Submit bid"}
           </Button>
         </form>
+        </div>
+
+        <div className="flex-1 rounded-lg border bg-white p-4 shadow-sm">
+          <h2 className="mb-2 text-sm font-semibold text-slate-700">
+            Recent bids
+          </h2>
+          {bids.length === 0 ? (
+            <p className="text-xs text-slate-500">No bids yet.</p>
+          ) : (
+            <ul className="max-h-96 space-y-1 overflow-y-auto text-xs">
+              {bids.map((bid, i) => (
+                <li
+                  key={i}
+                  className="flex justify-between gap-2 text-slate-700"
+                >
+                  <span className="truncate" title={bid.email}>
+                    {bid.email}
+                  </span>
+                  <span className="shrink-0 font-medium">
+                    ${bid.price.toFixed(2)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );
