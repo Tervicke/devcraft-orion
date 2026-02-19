@@ -3,7 +3,7 @@
 
 Real-time auction engine powered by Kafka and MySQL/MariaDB.
 
----
+![Architecture](https://github.com/Tervicke/devcraft-orion/blob/main/diagram.png?raw=true)
 
 # Architecture Overview
 
