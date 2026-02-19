@@ -382,14 +382,18 @@ func handleGetAuction(c *gin.Context) {
 		auctionID     int64
 		item          string
 		startingPrice float64
+		currentPrice  float64
 		imageURL      sql.NullString
 		endTime       time.Time
 	)
 
 	err := authDB.QueryRow(
-		"SELECT id, item, starting_price, image_url, end_time FROM auctions WHERE id = ?",
+		`SELECT a.id, a.item, a.starting_price,
+		 COALESCE((SELECT MAX(b.price) FROM bids b WHERE b.auction_id = a.id), a.starting_price),
+		 a.image_url, a.end_time
+		 FROM auctions a WHERE a.id = ?`,
 		id,
-	).Scan(&auctionID, &item, &startingPrice, &imageURL, &endTime)
+	).Scan(&auctionID, &item, &startingPrice, &currentPrice, &imageURL, &endTime)
 	if err == sql.ErrNoRows {
 		c.JSON(404, gin.H{"error": "Auction not found"})
 		return
@@ -409,6 +413,7 @@ func handleGetAuction(c *gin.Context) {
 		"id":            auctionID,
 		"item":          item,
 		"startingPrice": startingPrice,
+		"currentPrice":  currentPrice,
 		"imageUrl":      img,
 		"endTime":       endTime.UTC().Format(time.RFC3339),
 	})

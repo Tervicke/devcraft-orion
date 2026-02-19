@@ -52,8 +52,10 @@ export function AuctionPage() {
           const auctionData = data as Auction;
           console.log(auctionData);
           setAuction(auctionData);
-          setCurrentPrice(auctionData.currentPrice);
-          setBidPrice(auctionData.currentPrice);
+          const price =
+            auctionData.currentPrice ?? auctionData.startingPrice ?? 0;
+          setCurrentPrice(price);
+          setBidPrice(price);
         }
       } catch (err) {
         console.error(err);
@@ -223,7 +225,8 @@ export function AuctionPage() {
         <p className="mb-1 text-sm text-slate-600">
           Current price:{" "}
           <span className="font-semibold text-slate-900">
-            ${currentPrice.toFixed(2)}
+            $
+            {(currentPrice ?? auction.startingPrice ?? 0).toFixed(2)}
           </span>
         </p>
         <p className="mb-3 text-sm text-slate-600">
@@ -297,7 +300,7 @@ export function AuctionPage() {
             <Input
               id="bidPrice"
               type="number"
-              min={currentPrice}
+              min={currentPrice ?? auction.startingPrice ?? 0}
               step="0.01"
               value={bidPrice}
               onChange={(e) => setBidPrice(Number(e.target.value) || 0)}
