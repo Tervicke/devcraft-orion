@@ -256,8 +256,7 @@ export function AuctionPage() {
         <p className="mb-1 text-sm text-slate-600">
           Current price:{" "}
           <span className="font-semibold text-slate-900">
-            $
-            {(currentPrice ?? auction.startingPrice ?? 0).toFixed(2)}
+            ${(currentPrice ?? auction.startingPrice ?? 0).toFixed(2)}
           </span>
         </p>
         <p className="mb-3 text-sm text-slate-600">
@@ -277,97 +276,81 @@ export function AuctionPage() {
 
       <div className="flex flex-col gap-4 md:flex-row">
         <div className="flex-1 rounded-lg border bg-white p-4 shadow-sm">
-        <div className="mb-2 flex items-center justify-between text-sm text-slate-600">
-          <span>Live price stream (WebSocket)</span>
-          <span>
-            Status:{" "}
-            <span className="font-semibold">
-              {wsStatus === "connecting"
-                ? "Connecting..."
-                : wsStatus === "connected"
-                ? "Connected"
-                : "Disconnected"}
+          <div className="mb-2 flex items-center justify-between text-sm text-slate-600">
+            <span>Live price stream (WebSocket)</span>
+            <span>
+              Status:{" "}
+              <span className="font-semibold">
+                {wsStatus === "connecting"
+                  ? "Connecting..."
+                  : wsStatus === "connected"
+                  ? "Connected"
+                  : "Disconnected"}
+              </span>
             </span>
-          </span>
-        </div>
-        <form className="mt-3 space-y-4" onSubmit={handleBidSubmit}>
-          <div className="space-y-1">
-            <label
-              className="text-sm font-medium text-slate-800"
-              htmlFor="userId"
-            >
-              Username
-            </label>
-            <Input
-              id="userId"
-              type="text"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              required
-            />
           </div>
-
-          <div className="space-y-1">
-            <label
-              className="text-sm font-medium text-slate-800"
-              htmlFor="auctionIdDisplay"
-            >
-              Auction ID
-            </label>
-            <Input
-              id="auctionIdDisplay"
-              type="text"
-              value={id ?? ""}
-              disabled
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label
-              className="text-sm font-medium text-slate-800"
-              htmlFor="bidPrice"
-            >
-              Bid amount
-            </label>
-            <Input
-              id="bidPrice"
-              type="number"
-              min={currentPrice ?? auction.startingPrice ?? 0}
-              step="0.01"
-              value={bidPrice}
-              onChange={(e) => setBidPrice(Number(e.target.value) || 0)}
-              required
-            />
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {[10, 20, 30, 40, 50].map((v) => (
-              <Button
-                key={v}
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => increment(v)}
+          <form className="mt-3 space-y-4" onSubmit={handleBidSubmit}>
+            <div className="space-y-1">
+              <label
+                className="text-sm font-medium text-slate-800"
+                htmlFor="auctionIdDisplay"
               >
-                +{v}
-              </Button>
-            ))}
-          </div>
+                Auction ID
+              </label>
+              <Input
+                id="auctionIdDisplay"
+                type="text"
+                value={id ?? ""}
+                disabled
+              />
+            </div>
 
-          {bidError && (
-            <p className="text-sm text-red-600" role="alert">
-              {bidError}
-            </p>
-          )}
+            <div className="space-y-1">
+              <label
+                className="text-sm font-medium text-slate-800"
+                htmlFor="bidPrice"
+              >
+                Bid amount
+              </label>
+              <Input
+                id="bidPrice"
+                type="number"
+                min={currentPrice ?? auction.startingPrice ?? 0}
+                step="0.01"
+                value={bidPrice}
+                onChange={(e) => setBidPrice(Number(e.target.value) || 0)}
+                required
+              />
+            </div>
 
-          <Button
-            type="submit"
-            className="w-full bg-slate-900 text-white hover:bg-slate-800"
-            disabled={bidLoading || wsStatus !== "connected"}
-          >
-            {bidLoading ? "Submitting bid..." : "Submit bid"}
-          </Button>
-        </form>
+            <div className="flex flex-wrap gap-2">
+              {[10, 20, 30, 40, 50].map((v) => (
+                <Button
+                  key={v}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => increment(v)}
+                >
+                  +{v}
+                </Button>
+              ))}
+            </div>
+
+            {bidError && (
+              <p className="text-sm text-red-600" role="alert">
+                {bidError}
+              </p>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full bg-slate-900 text-white hover:bg-slate-800"
+              disabled={bidLoading || wsStatus !== "connected"}
+            >
+              {bidLoading ? "Submitting bid..." : "Submit bid"}
+            </Button>
+          </form>
         </div>
 
         <div className="flex-1 rounded-lg border bg-white p-4 shadow-sm">
