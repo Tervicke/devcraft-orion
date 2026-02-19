@@ -5,6 +5,14 @@ Real-time auction engine powered by Kafka and MySQL/MariaDB.
 
 ![Architecture](https://github.com/Tervicke/devcraft-orion/blob/main/diagram.png?raw=true)
 
+
+# Screenshots
+
+<img width="1074" height="818" alt="image" src="https://github.com/user-attachments/assets/7d65095a-fa31-4a5f-9a0d-64f742b1fe70" />
+<img width="1074" height="818" alt="image" src="https://github.com/user-attachments/assets/3d40995f-84ba-4ceb-bb8e-fd0e28c203a8" />
+<img width="969" height="1054" alt="image" src="https://github.com/user-attachments/assets/f6dc7bc0-c886-4d97-ac7c-a43f83934595" />
+
+
 # Architecture Overview
 
 ## 🐂 Taurus (Backend API)
