@@ -152,7 +152,51 @@ func bidHandler(c *gin.Context, db *sql.DB, p *kafka.Producer) {
 		c.JSON(400, gin.H{"error": "Auction has already ended"})
 		return
 	}
+	//do a atomic transaction to ensure we get the correct max bid and insert the new bid without race conditions
+	//1st check if the new bid is higher than current_price from the auctions table and then update the bid if it else rollback
+	tx , err := db.Begin()
+	if err != nil {
+		log.Printf("error starting transaction: %v", err)
+		c.JSON(500 , err)
+		return;
+	}
+	res , err := tx.Exec(
+		"Update auctions set current_price = ? where id = ? and current_price < ?",
+		req.Price, auctionID, req.Price,
+	);
 
+	if err != nil {
+		tx.Rollback()
+		log.Printf("error updating auction current price: %v", err)
+		c.JSON(500 , err)
+		return;
+	}
+	_ , err = tx.Exec(
+		"INSERT INTO bids (auction_id, user_id, price) VALUES (?, ?, ?)",
+		auctionID, s.UserID, req.Price,
+	)
+	if err != nil {
+		tx.Rollback()
+		c.JSON(500 , err);
+		return;
+	}
+	rowsaffected , err := res.RowsAffected();
+	if err != nil {
+		tx.Rollback()
+		c.JSON(500, err)
+	}
+	if rowsaffected == 0 {
+		tx.Rollback();
+		c.JSON(400, gin.H{"error": "Bid was not high enough to update the current bid"})
+		return;
+	}
+	if err := tx.Commit(); err != nil {
+		log.Printf("error committing transaction: %v", err)
+		c.JSON(500, err)
+		return;
+	}
+
+	/* old code without transaction (bad code do not use)
 	var maxPrice sql.NullFloat64
 	err = db.QueryRow(
 		"SELECT COALESCE(MAX(price), 0) FROM bids WHERE auction_id = ?",
@@ -181,6 +225,7 @@ func bidHandler(c *gin.Context, db *sql.DB, p *kafka.Producer) {
 		c.JSON(500, gin.H{"error": "Failed to update bid"})
 		return
 	}
+	*/
 
 	var bidderEmail string
 	if err := db.QueryRow("SELECT email FROM users WHERE id = ?", s.UserID).Scan(&bidderEmail); err != nil {
@@ -439,8 +484,8 @@ func handleCreateAuction(c *gin.Context) {
 	}
 
 	res, err := tx.Exec(
-		"INSERT INTO auctions (user_id, item, starting_price, image_url, end_time) VALUES (?, ?, ?, ?, ?)",
-		s.UserID, body.Item, *body.StartingPrice, image, endTime,
+		"INSERT INTO auctions (user_id, item, starting_price, image_url, end_time , current_price) VALUES (?, ?, ?, ?, ? , ?)",
+		s.UserID, body.Item, *body.StartingPrice, image, endTime, *body.StartingPrice,
 	)
 	if err != nil {
 		tx.Rollback()
