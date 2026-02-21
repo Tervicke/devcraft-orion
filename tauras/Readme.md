@@ -2,6 +2,18 @@
 
 ## requirements
 
+### setup the docker
+
+build the image
+```
+docker build -t tauras .
+```
+
+run the container 
+```
+docker run -p 3000:3000 --network host --env-file .env tauras
+```
+
 ### setup database
 
 We are using mysql database
