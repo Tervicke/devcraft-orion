@@ -23,13 +23,14 @@ import (
 )
 
 func setupDb() (*sql.DB, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-		return nil , err;
+	if err := godotenv.Load(); err != nil {
+		log.Println(".env not found, using system environment variables")
 	}
-	dsn := os.Getenv("DB_DSN");
-	fmt.Println(dsn);
+
+	dsn := os.Getenv("DB_DSN")
+	if dsn == "" {
+		return nil, fmt.Errorf("DB_DSN is not set")
+	}
 	db , err := sql.Open("mysql", dsn);
 	if err != nil {
 		return nil , err;
