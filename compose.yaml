@@ -1,0 +1,49 @@
+services:
+  kafka:
+    image: apache/kafka:4.2.0
+    ports:
+      - "9092:9092"
+
+  mysql:
+    image: mysql:8.0.45
+    container_name: mysql-container
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p$MYSQL_ROOT_PASSWORD",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  tauras:
+    build:
+      context: ./tauras
+      dockerfile: Dockerfile.dev
+    depends_on:
+      - mysql
+      - kafka
+    volumes:
+      - ./tauras:/app
+    ports:
+      - 3000:3000
+
+volumes:
+  mysql-data:
