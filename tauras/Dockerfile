@@ -3,8 +3,7 @@ FROM golang:1.25-alpine AS builder
 # Install build tools and librdkafka
 RUN apk add --no-cache \
     build-base \
-    librdkafka-dev \
-    git 
+    librdkafka-dev
 
 WORKDIR /build
 
