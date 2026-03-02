@@ -1,4 +1,18 @@
 services:
+  tauras:
+    build:
+      context: ./tauras
+      dockerfile: Dockerfile.dev
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    volumes:
+      - ./tauras:/app
+    ports:
+      - 3000:3000
+
   kafka:
     image: apache/kafka:4.2.0
     ports:
@@ -19,31 +33,13 @@ services:
     healthcheck:
       test:
         [
-          "CMD",
-          "mysqladmin",
-          "ping",
-          "-h",
-          "localhost",
-          "-u",
-          "root",
-          "-p$MYSQL_ROOT_PASSWORD",
+          "CMD-SHELL",
+          "mysqladmin ping -h localhost -uroot -pexample_password || exit 1",
         ]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-      start_period: 10s
-
-  tauras:
-    build:
-      context: ./tauras
-      dockerfile: Dockerfile.dev
-    depends_on:
-      - mysql
-      - kafka
-    volumes:
-      - ./tauras:/app
-    ports:
-      - 3000:3000
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   mysql-data:
