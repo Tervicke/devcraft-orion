@@ -128,10 +128,12 @@ func corsMiddleware() gin.HandlerFunc {
 func main(){
 
 	//Run Migrations	
+	/*
 	if err := migrate(); err != nil {
 		log.Fatalf("Failed to run migrations: ", err)
 		return;
 	}
+	*/
 
 	log.Println("Database migrations completed successfully");
 

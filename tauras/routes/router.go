@@ -14,7 +14,7 @@ func SetupRoutes(r *gin.Engine , ctx *t.AppContext){
 		c.JSON(200, "pong");
 	});
 	
-	userGroup := r.Group("/user")
+	userGroup := r.Group("api/user")
 	{
 		userGroup.POST("/register", func(c *gin.Context) {
 			users.HandleRegister(c , ctx)
