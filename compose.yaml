@@ -1,5 +1,6 @@
 services:
   tauras:
+    container_name: tauras
     build:
       context: ./tauras
       dockerfile: Dockerfile.dev
@@ -14,13 +15,14 @@ services:
       - 3000:3000
 
   kafka:
+    container_name: kafka
     image: apache/kafka:4.2.0
     ports:
       - "9092:9092"
 
   mysql:
     image: mysql:8.0.45
-    container_name: mysql-container
+    container_name: mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
@@ -40,6 +42,17 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-
+  leo:
+    container_name: leo
+    build:
+      context: ./leo
+      dockerfile: Dockerfile.dev
+    depends_on:
+      tauras:
+        condition: service_started
+    volumes:
+      - ./leo:/app
+    ports:
+      - 5173:5173
 volumes:
   mysql-data:
