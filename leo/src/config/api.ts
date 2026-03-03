@@ -1,6 +1,4 @@
 export const API_BASE =
   import.meta.env.VITE_API_BASE ?? "http://localhost:3000";
 
-export const WS_BASE =
-  import.meta.env.VITE_WS_BASE ?? "ws://localhost:8081";
-
+export const WS_BASE = import.meta.env.VITE_WS_BASE ?? "ws://localhost:8081";
