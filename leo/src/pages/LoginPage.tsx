@@ -18,7 +18,7 @@ export function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/login`, {
+      const res = await fetch(`${API_BASE}/api/user/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

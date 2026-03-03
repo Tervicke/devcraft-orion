@@ -31,7 +31,7 @@ export function CreateAuctionPage() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/create`, {
+      const res = await fetch(`${API_BASE}/api/auction/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

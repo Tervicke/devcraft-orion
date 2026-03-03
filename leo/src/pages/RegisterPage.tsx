@@ -18,7 +18,7 @@ export function RegisterPage() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/register`, {
+      const res = await fetch(`${API_BASE}/api/user/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

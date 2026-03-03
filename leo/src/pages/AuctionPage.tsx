@@ -194,7 +194,7 @@ export function AuctionPage() {
 
     try {
       setBidLoading(true);
-      const res = await fetch(`${API_BASE}/bid`, {
+      const res = await fetch(`${API_BASE}/api/auction/bid`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
