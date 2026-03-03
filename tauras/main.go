@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"tauras/models"
 	"tauras/routes"
@@ -101,30 +100,6 @@ func getEnv(key, def string) string {
 	return def
 }
 
-func frontendOrigin() string {
-	return getEnv("FRONTEND_ORIGIN", "http://localhost:5173")
-}
-
-// corsMiddleware replicates the Bun CORS behavior for auth/auction routes.
-func corsMiddleware() gin.HandlerFunc {
-	origin := frontendOrigin()
-	return func(c *gin.Context) {
-		h := c.Writer.Header()
-		h.Set("Access-Control-Allow-Origin", origin)
-		h.Set("Access-Control-Allow-Credentials", "true")
-		h.Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
-		h.Set("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
-
-		if c.Request.Method == http.MethodOptions {
-			c.Status(http.StatusNoContent)
-			c.Abort()
-			return
-		}
-
-		c.Next()
-	}
-}
-
 func main(){
 
 	//Run Migrations	
@@ -166,7 +141,7 @@ func main(){
 
 	//only allow localhost:5173 cors and include allow creditinals
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowOrigins:     []string{"http://leo:5173" , "http://localhost:5173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
