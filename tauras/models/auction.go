@@ -10,7 +10,7 @@ type Auction struct{
 	Starting_price float64 `gorm:"type:decimal(10,2)"`
 	Image_url string `gorm:"not null"`
 	End_time time.Time `gorm:"not null"`
-	current_price float32 `gorm:"type:decimal(10,2)"`
+	Current_price float64 `gorm:"type:decimal(10,2)"`
 }
 
 func (Auction) TableName() string {
