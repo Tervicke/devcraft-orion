@@ -1,3 +1,9 @@
 tauras/.env
 tests/venv/
 tauras/.air.toml
+Pisces/tmp/
+compose.dev.yaml
+leo/test.js
+tauras/tmp/
+tmp/
+.env
