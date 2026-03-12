@@ -4,8 +4,8 @@ import "time"
 
 
 type Auction struct{
-	Id uint `gorm:"primaryKey;autoIncrement"`
-	User_id uint `gorm:"not null"`
+	Id uint64 `gorm:"primaryKey;autoIncrement"`
+	User_id uint64 `gorm:"not null"`
 	Item string `gorm:"not null"`
 	Starting_price float64 `gorm:"type:decimal(10,2)"`
 	Image_url string `gorm:"not null"`

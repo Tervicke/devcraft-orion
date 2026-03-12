@@ -3,15 +3,17 @@ package auction
 import (
 	"fmt"
 	"log"
+	"tauras/models"
 	t "tauras/types"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func HandleCreateAuction(c *gin.Context , ctx *t.AppContext) {
 	s := ctx.Session.RequireSession(c)
-	db := ctx.DB
+	db := ctx.Gdb;
 
 	if s == nil {
 		return
@@ -28,7 +30,8 @@ func HandleCreateAuction(c *gin.Context , ctx *t.AppContext) {
 		return
 	}
 
-	fmt.Println("Received create auction request: \n", body);
+	fmt.Println("##########################",s.UserID)
+	fmt.Println("Received cte auction request: \n", body);
 
 	// Treat all end times as IST (Asia/Kolkata) local time.
 	loc, err := time.LoadLocation("Asia/Kolkata")
@@ -51,8 +54,42 @@ func HandleCreateAuction(c *gin.Context , ctx *t.AppContext) {
 	} else {
 		image = nil
 	}
+	//use a gorm transaction to ensure both auction and initial bid are created together
+	fmt.Println("##########################",s.UserID)
+	fmt.Println("heloooooooooooooooooooooooooooooooooo ")
+	auction := models.Auction{
+		Id:            0, // this will be set by the database
+		User_id: 	  s.UserID,
+		Item: 		body.Item,
+		Starting_price: *body.StartingPrice,
+		Image_url: image.(string),
+		End_time: endTime,
+		Current_price: *body.StartingPrice,
+	}
+
+	bid := models.Bid{
+		Id: 	  0, // this will be set by the database
+		Auction_id: auction.Id,
+		User_id:    s.UserID,
+		Price:     auction.Current_price,
+		Updated_at: time.Now(),
+	}
+
+	err = db.Transaction(func(tx *gorm.DB) error {
+
+		if err := tx.Create(&auction).Error; err != nil {
+			return err //rollback will be automatic if error is returned
+		}
+		
+		if err := tx.Create(&bid).Error; err != nil {
+			return err //rollback will be automatic if error is returned
+		}
+
+		return nil
+	}) 
 
 	//use a transaction to ensure both auction and initial bid are created together
+	/*
 	tx, err := db.Begin()
 	if err != nil {
 		log.Printf("error starting transaction: %v", err)
@@ -97,6 +134,8 @@ func HandleCreateAuction(c *gin.Context , ctx *t.AppContext) {
 		c.JSON(500, gin.H{"error": "Internal server error"})
 		return
 	}
+	*/
 
-	c.JSON(201, gin.H{"auctionId": auctionID})
+	c.JSON(201, gin.H{"auctionId": auction.Id})
+
 }

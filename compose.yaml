@@ -1,6 +1,5 @@
 services:
   tauras:
-    container_name: tauras
     build:
       context: ./tauras
       dockerfile: Dockerfile.dev
@@ -15,8 +14,25 @@ services:
       - 3000:3000
 
   kafka:
-    container_name: kafka
     image: apache/kafka:4.2.0
+    container_name: kafka
+    hostname: kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
     ports:
       - "9092:9092"
 
@@ -50,9 +66,26 @@ services:
     depends_on:
       tauras:
         condition: service_started
+    environment:
+      KAFKA_BROKERS: kafka:9092
     volumes:
       - ./leo:/app
     ports:
       - 5173:5173
+
+  pisces:
+    build:
+      context: ./Pisces
+      dockerfile: Dockerfile.dev
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    volumes:
+      - ./Pisces:/app
+    ports:
+      - 8081:8081
+
 volumes:
   mysql-data:

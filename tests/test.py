@@ -9,11 +9,11 @@ import os
 import sys
 
 AUCTION_ID = input("Input auction id: ")
-HTTP_URL = "http://localhost:3000/bid"
+HTTP_URL = "http://localhost:3000/api/auction/bid"
 WS_URL = "ws://localhost:8081/ws"
 
-VIEWERS = 1000
-BIDDERS = 10
+VIEWERS = 100
+BIDDERS = 4
 
 current_price = float(input("Enter starting price: "))
 price_lock = asyncio.Lock()
@@ -109,10 +109,10 @@ async def bidder_task(i):
 
     async with aiohttp.ClientSession() as session:
         while True:
-            await asyncio.sleep(random.uniform(1, 3))
+            await asyncio.sleep(random.uniform(3, 5))
 
             async with price_lock:
-                bid_price = current_price + random.uniform(10, 50)
+                bid_price = current_price + random.uniform(1, 5)
 
             payload = {
                 "auctionid": AUCTION_ID,

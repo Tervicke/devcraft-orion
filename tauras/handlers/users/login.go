@@ -22,7 +22,7 @@ func HandleLogin(c *gin.Context , ctx *t.AppContext) {
 	}
 
 	var (
-		userID       int64
+		userID       uint64
 		passwordHash string
 	)
 	err := authDB.QueryRow("SELECT id, password_hash FROM users WHERE email = ? LIMIT 1", body.Email).Scan(&userID, &passwordHash)

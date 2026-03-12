@@ -21,7 +21,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 )
-func migrate() error {
+func migrate() ( *gorm.DB , error) {
 	if err := godotenv.Load(); err != nil {
 		log.Println(".env not found, using system environment variables")
 	}
@@ -29,14 +29,18 @@ func migrate() error {
 	fmt.Println("Running migrations with DSN: ", dsn)
 	gormDb , err := gorm.Open(mysql.Open(dsn), &gorm.Config{}) ;
 	if err != nil {
-		return err
+		return nil , err
 	}
 	//auto migrate the auction
-	return gormDb.AutoMigrate(
+	err = gormDb.AutoMigrate(
 		&models.Auction{},
 		&models.Bid{},
 		&models.User{},
 	)
+	if err != nil {
+		return nil , err;
+	}
+	return gormDb , nil;
 }
 
 func setupDb() (*sql.DB, error) {
@@ -69,8 +73,9 @@ func setupKafkaProducer() (*kafka.Producer, error) {
 		log.Println(".env not found, using system environment variables")
 	}
 
-	kafka_broker := os.Getenv("KAFKA_BROKERS")
-	fmt.Println("Setting up Kafka producer with brokers: ", kafka_broker)
+	// kafka_broker := os.Getenv("KAFKA_BROKERS")
+	kafka_broker := "kafka:9092";
+	fmt.Println("Setting up Kafka producer with brokers:", kafka_broker)
 	if kafka_broker == "" {
 		return nil, fmt.Errorf("kafka brokers are not set in KAFKA_BROKERS")
 	}
@@ -103,12 +108,11 @@ func getEnv(key, def string) string {
 func main(){
 
 	//Run Migrations	
-	/*
-	if err := migrate(); err != nil {
+	gdb , err := migrate();
+	if err != nil {
 		log.Fatalf("Failed to run migrations: ", err)
 		return;
 	}
-	*/
 
 	log.Println("Database migrations completed successfully");
 
@@ -135,6 +139,7 @@ func main(){
 		DB: db , //the db connection
 		Session: &services.SessionService{}, //the session service
 		KafkaProducer: p, //the kafka producer
+		Gdb : gdb, //the gorm db for migrations and other operations
 	};
 
 	r := gin.Default();

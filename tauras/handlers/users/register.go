@@ -52,7 +52,7 @@ func HandleRegister(c *gin.Context , ctx *t.AppContext) {
 		return
 	}
 
-	token := ctx.Session.CreateSession(userID)
+	token := ctx.Session.CreateSession(uint64(userID))
 	ctx.Session.SetSessionCookie(c, token)
 	c.JSON(201, gin.H{"id": userID, "email": body.Email})
 }

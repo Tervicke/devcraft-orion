@@ -10,7 +10,7 @@ import (
 )
 
 type Session struct {
-    UserID int64
+    UserID uint64
 }
 
 // In-memory session store (replace with DB or Redis for production)
@@ -32,8 +32,8 @@ func (s *SessionService) ParseSessionCookie(c *gin.Context) *Session {
 }
 
 // CreateSession creates a new session token
-func (s *SessionService) CreateSession(userID int64) string {
-    token := strconv.FormatInt(time.Now().UnixNano(), 36) + "-" + strconv.FormatInt(userID, 36)
+func (s *SessionService) CreateSession(userID uint64) string {
+    token := strconv.FormatInt(time.Now().UnixNano(), 36) + "-" + strconv.FormatInt(int64(userID), 36)
     sessions[token] = Session{UserID: userID}
     return token
 }
@@ -52,7 +52,7 @@ func (s *SessionService) SetSessionCookie(c *gin.Context, token string) {
 // RequireSession validates that a session exists, returns nil if unauthorized
 func (s *SessionService) RequireSession(c *gin.Context) *Session {
     if os.Getenv("LOAD_TEST") == "true" {
-        return &Session{UserID: -1}
+        return &Session{UserID: 0}
     }
     sess := s.ParseSessionCookie(c)
     if sess == nil {
